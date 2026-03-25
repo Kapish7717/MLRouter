@@ -178,6 +178,48 @@ async def list_models():
     """List all registered models"""
     return {"models": registry.list_models()}
 
+@app.get("/models/auc", summary="Get ROC AUC metrics for all models", tags=["Models"])
+async def get_auc_metrics():
+    """Returns the ROC AUC and Accuracy metrics for all loaded models."""
+    return {
+        "models": [
+            {
+                "model_id": m["model_id"],
+                "roc_auc": m["roc_auc"],
+                "accuracy": m["accuracy"],
+                "version": m["version"]
+            }
+            for m in registry.list_models()
+        ]
+    }
+
 @app.get("/health")
 async def health():
     return {"status": "ok", "models_loaded": len(registry.models)}
+
+@app.get("/models/roc_curve", summary="Get model ROC AUC curve comparison", tags=["Models"])
+async def get_roc_curve():
+    """
+    Returns the generated ROC AUC curve plot based on the currently active version in the model registry.
+    """
+    import os
+    from fastapi.responses import FileResponse
+    
+    try:
+        registered = registry.get("model_a")
+        version = registered.metadata.get("version", "")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Model A not registered")
+        
+    # Dynamically fetch the image matching the registered version
+    file_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "models", f"roc_curve_{version}.png")
+    
+    if os.path.exists(file_path):
+        return FileResponse(file_path, media_type="image/png")
+        
+    # Fallback to the root roc_curve.png if the versioned one hasn't been generated yet
+    fallback_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "roc_curve.png")
+    if os.path.exists(fallback_path):
+        return FileResponse(fallback_path, media_type="image/png")
+        
+    raise HTTPException(status_code=404, detail=f"ROC curve image for version {version} not found.")

@@ -8,6 +8,7 @@ class RegisteredModel:
     model_id:   str          # "model_a" or "model_b"
     model:      Any          # the actual sklearn/xgb object
     metadata:   Dict         # accuracy, auc, version etc
+    version:    str          # version tag (extracted from metadata)
     is_active:  bool = True
 
 class ModelRegistry:
@@ -30,7 +31,8 @@ class ModelRegistry:
         self.models[model_id] = RegisteredModel(
             model_id=model_id,
             model=model,
-            metadata=metadata
+            metadata=metadata,
+            version=metadata.get("version", "unknown")
         )
         print(f"✅ Registered: {model_id} "
               f"(v{metadata.get('version', '?')})")

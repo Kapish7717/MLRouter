@@ -152,6 +152,43 @@ with c2:
         st.success(f"Model {winner} promoted to 100% traffic!")
         st.balloons()
 
+@st.cache_data(ttl=60)
+def fetch_auc_metrics():
+    try:
+        r = requests.get(f"{API}/models/auc", timeout=3)
+        return r.json().get("models", [])
+    except:
+        return []
+
+# ── Training Performance ──────────────────────────────────────────
+st.divider()
+st.subheader("📈 Model Training Performance")
+st.caption("Training-time ROC AUC and Accuracy from currently active model versions.")
+
+auc_metrics = fetch_auc_metrics()
+if auc_metrics:
+    m1, m2 = st.columns(2)
+    
+    for idx, m in enumerate(auc_metrics):
+        col = m1 if idx % 2 == 0 else m2
+        with col:
+            st.markdown(f"#### {m['model_id'].replace('_', ' ').title()}")
+            mc1, mc2 = st.columns(2)
+            mc1.metric("Training ROC AUC", f"{m['roc_auc']:.4f}")
+            mc2.metric("Training Accuracy", f"{m['accuracy']:.4f}")
+            st.caption(f"Version: {m['version']}")
+
+    st.markdown("---")
+    # Display the ROC Curve image from the API
+    st.markdown("**ROC AUC Curve Comparison**")
+    try:
+        # We use a timestamp query param to bypass browser cache when model version changes
+        st.image(f"{API}/models/roc_curve?t={int(time.time())}", 
+                 caption="Active Models Performance (Champion vs Challenger)",
+                 use_container_width=True)
+    except:
+        st.warning("ROC curve image not found on server.")
+
 # ── Test prediction ───────────────────────────────────────────────
 st.divider()
 st.subheader("🔬 Test a Prediction")

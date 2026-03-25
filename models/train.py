@@ -59,8 +59,8 @@ X_test = X_test[top_features]
 # ── Model A — XGBoost ─────────────────────────────────────────────
 print("Training Model A (XGBoost)...")
 model_a = XGBClassifier(
-    n_estimators=200,
-    max_depth=6,
+    n_estimators=150,
+    max_depth=5,
     learning_rate=0.1,
     use_label_encoder=False,
     eval_metric='logloss',
@@ -86,15 +86,21 @@ with open(os.path.join(models_dir, f"model_a_{VERSION_TAG}.pkl"), "wb") as f:
 with open(os.path.join(models_dir, f"model_a_{VERSION_TAG}_metadata.json"), "w") as f:
     json.dump(metrics_a, f, indent=2)
 
+# Also save as "latest" for the registry
+with open(os.path.join(models_dir, "model_a.pkl"), "wb") as f:
+    pickle.dump(model_a, f)
+with open(os.path.join(models_dir, "model_a_metadata.json"), "w") as f:
+    json.dump(metrics_a, f, indent=2)
+
 print(f"Model A — Accuracy: {metrics_a['accuracy']}, AUC: {metrics_a['roc_auc']}")
 
 # ── Model B — LightGBM ────────────────────────────────────────────
 print("Training Model B (LightGBM)...")
 model_b = LGBMClassifier(
-    n_estimators=200,
-    max_depth=8,
+    n_estimators=150,
+    max_depth=5,
     learning_rate=0.05,
-    num_leaves=64,
+    num_leaves=32,
     random_state=42,
     verbose=-1
 )
@@ -116,5 +122,35 @@ with open(os.path.join(models_dir, f"model_b_{VERSION_TAG}.pkl"), "wb") as f:
 with open(os.path.join(models_dir, f"model_b_{VERSION_TAG}_metadata.json"), "w") as f:
     json.dump(metrics_b, f, indent=2)
 
+# Also save as "latest" for the registry
+with open(os.path.join(models_dir, "model_b.pkl"), "wb") as f:
+    pickle.dump(model_b, f)
+with open(os.path.join(models_dir, "model_b_metadata.json"), "w") as f:
+    json.dump(metrics_b, f, indent=2)
+
 print(f"Model B — Accuracy: {metrics_b['accuracy']}, AUC: {metrics_b['roc_auc']}")
+
+# ── Save ROC Curve for this version ───────────────────────────────
+import matplotlib.pyplot as plt
+from sklearn.metrics import roc_curve, auc
+
+fpr_a, tpr_a, _ = roc_curve(y_test, proba_a)
+fpr_b, tpr_b, _ = roc_curve(y_test, proba_b)
+
+plt.figure(figsize=(8, 6))
+plt.plot(fpr_a, tpr_a, color='darkorange', lw=2, label=f'Model A (XGBoost) (AUC = {metrics_a["roc_auc"]})')
+plt.plot(fpr_b, tpr_b, color='navy', lw=2, label=f'Model B (LightGBM) (AUC = {metrics_b["roc_auc"]})')
+plt.plot([0, 1], [0, 1], color='gray', lw=2, linestyle='--')
+plt.xlim([0.0, 1.0])
+plt.ylim([0.0, 1.05])
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title(f'ROC Curve for Version {VERSION_TAG}')
+plt.legend(loc="lower right")
+plt.grid(True, alpha=0.3)
+
+out_path = os.path.join(models_dir, f"roc_curve_{VERSION_TAG}.png")
+plt.savefig(out_path, dpi=300, bbox_inches='tight')
+print(f"✅ ROC curve saved to {out_path}")
+
 print("\n✅ Both models trained and saved.")
