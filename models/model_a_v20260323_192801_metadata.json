@@ -1,0 +1,22 @@
+{
+  "accuracy": 0.8903,
+  "roc_auc": 0.896,
+  "model_type": "XGBoost",
+  "features": [
+    "Id",
+    "Age",
+    "Gender",
+    "Hormonal Changes",
+    "Family History",
+    "Calcium Intake",
+    "Physical Activity",
+    "Smoking",
+    "Prior Fractures",
+    "Race/Ethnicity_Asian",
+    "Race/Ethnicity_Caucasian",
+    "Body Weight_Underweight",
+    "Vitamin D Intake_Sufficient",
+    "Medical Conditions_Rheumatoid Arthritis"
+  ],
+  "version": "v20260323_192801"
+}
