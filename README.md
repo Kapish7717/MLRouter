@@ -8,25 +8,50 @@ When a prediction request is received, the API dynamically routes the request ba
 
 ```mermaid
 graph TD
-    Client(Client Application) -->|POST /predict| API(FastAPI Server)
-    
-    subgraph Serving & Routing
-        API -->|experiment_id| Router{A/B Traffic Router}
-        Router -->|50% Traffic| ModelA(Champion: XGBoost)
-        Router -->|50% Traffic| ModelB(Challenger: LightGBM)
-        ModelA --> Registry[(Model Registry)]
-        ModelB --> Registry
+    %% Global styling
+    classDef client fill:#f9f,stroke:#333,stroke-width:2px;
+    classDef server fill:#bbf,stroke:#333,stroke-width:2px;
+    classDef database fill:#dfd,stroke:#333,stroke-width:2px;
+    classDef pipeline fill:#fff4dd,stroke:#d4a017,stroke-width:2px,stroke-dasharray: 5 5;
+
+    subgraph Clients
+        App(External Application)
+        Dashboard(Streamlit Dashboard)
     end
     
-    subgraph Observability
-        ModelA --> Infer(Inference Engine)
+    App -->|POST /predict| API(FastAPI REST API)
+    Dashboard -->|GET Metrics & Plots| API
+    Dashboard -->|PATCH Experiment Config| API
+    
+    subgraph "ML Serving Ecosystem"
+        API --> Router{A/B Traffic Router}
+        
+        Router -->|Split A| ModelA(Champion: XGBoost)
+        Router -->|Split B| ModelB(Challenger: LightGBM)
+        
+        ModelA -.-> Registry[(Model Registry)]
+        ModelB -.-> Registry
+        
+        ModelA --> Infer[[Inference Engine]]
         ModelB --> Infer
-        Infer --> Track[(Tracking Database)]
-        Infer --> Return(Prediction response)
     end
     
-    Return --> API
-    API --> Client
+    subgraph "Persistence & Metadata"
+        Infer --> DB[(Tracking Database)]
+        Registry -.-> Disk[(Artifact Disk Storage)]
+    end
+    
+    subgraph "Training Loop (MLOps)"
+        Train(train.py) -->|Versioning| Disk
+    end
+
+    API -->|Inference Result| App
+
+    %% Apply Classes
+    class App,Dashboard client;
+    class API server;
+    class DB,Disk,Registry database;
+    class Train pipeline;
 ```
 
 ## 🚀 Professional MLOps Features
