@@ -9,11 +9,11 @@ API = "http://localhost:8000"
 EXP = "exp_001"
 
 st.set_page_config(
-    page_title="ML Serving Platform",
+    page_title="MLRouter",
     page_icon="🧪", layout="wide"
 )
 
-st.title("🧪 ML Model Serving Platform")
+st.title("🧪 MLRouter")
 st.caption("Live A/B Testing Dashboard")
 
 # ── Auto-refresh ──────────────────────────────────────────────────

@@ -9,7 +9,9 @@ from serving.model_registry import registry
 from serving.router         import router, ExperimentConfig
 from tracking.database      import (log_prediction,
                                     get_experiment_metrics,
-                                    get_recent_predictions)
+                                    get_recent_predictions,
+                                    update_experiment_stats,
+                                    get_experiment_summary)
 
 app = FastAPI(
     title="ML Model Serving Platform",
@@ -79,6 +81,7 @@ def predict(request: PredictRequest):
         
         # Make sure the dataframe exactly matches what the model expects
         model_obj = registered.model
+        
         if hasattr(model_obj, "feature_names_in_"):
             expected = list(model_obj.feature_names_in_)
             if any("_" in f for f in expected) and not any(" " in f for f in expected):
@@ -129,10 +132,16 @@ def predict(request: PredictRequest):
 # ── Experiment management endpoints ──────────────────────────────
 @app.get("/experiments/{experiment_id}/metrics")
 async def get_metrics(experiment_id: str):
-    """Get live A/B comparison metrics"""
+    """Get live A/B comparison metrics from the summary table"""
+    # 1. Refresh the stats table
+    update_experiment_stats(experiment_id)
+    
+    # 2. Get the summarised results
+    summary = get_experiment_summary(experiment_id)
+    
     return {
         "experiment_id": experiment_id,
-        "metrics":       get_experiment_metrics(experiment_id)
+        "metrics":       summary
     }
 
 @app.get("/experiments/{experiment_id}/predictions")

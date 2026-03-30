@@ -6,6 +6,7 @@ from sklearn.preprocessing import LabelEncoder, StandardScaler
 from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 from sklearn.metrics import accuracy_score, roc_auc_score
+from sklearn.ensemble import RandomForestClassifier
 import pickle, json, os
 from datetime import datetime
 
@@ -121,14 +122,45 @@ with open(os.path.join(models_dir, f"model_b_{VERSION_TAG}.pkl"), "wb") as f:
     pickle.dump(model_b, f)
 with open(os.path.join(models_dir, f"model_b_{VERSION_TAG}_metadata.json"), "w") as f:
     json.dump(metrics_b, f, indent=2)
-
-# Also save as "latest" for the registry
 with open(os.path.join(models_dir, "model_b.pkl"), "wb") as f:
     pickle.dump(model_b, f)
 with open(os.path.join(models_dir, "model_b_metadata.json"), "w") as f:
     json.dump(metrics_b, f, indent=2)
 
 print(f"Model B — Accuracy: {metrics_b['accuracy']}, AUC: {metrics_b['roc_auc']}")
+# ── Model C — Ranfom Forest ────────────────────────────────────────────
+# print("Training Model C (Random Forest)...")
+# model_c = RandomForestClassifier(
+#     n_estimators=100,
+#     max_depth=10,
+#     min_samples_split=10,
+#     class_weight=None,
+# )
+# model_c.fit(X_train, y_train)
+
+# preds_c = model_c.predict(X_test)
+# proba_c = model_c.predict_proba(X_test)[:, 1]
+
+# metrics_c = {
+#     "accuracy":   round(accuracy_score(y_test, preds_c), 4),
+#     "roc_auc":    round(roc_auc_score(y_test, proba_c), 4),
+#     "model_type": "Random Forest",
+#     "features":   list(X.columns),
+#     "version":    VERSION_TAG
+# }
+
+# # Also save as "latest" for the registry
+# with open(os.path.join(models_dir, f"model_c_{VERSION_TAG}.pkl"), "wb") as f:
+#     pickle.dump(model_c, f)
+# with open(os.path.join(models_dir, f"model_c_{VERSION_TAG}_metadata.json"), "w") as f:
+#     json.dump(metrics_c, f, indent=2)
+# with open(os.path.join(models_dir, "model_c.pkl"), "wb") as f:
+#     pickle.dump(model_c, f)
+# with open(os.path.join(models_dir, "model_c_metadata.json"), "w") as f:
+#     json.dump(metrics_c, f, indent=2)
+
+# print(f" Model C — Accuracy: {metrics_c['accuracy']}, AUC: {metrics_c['roc_auc']}")
+
 
 # ── Save ROC Curve for this version ───────────────────────────────
 import matplotlib.pyplot as plt
@@ -136,10 +168,12 @@ from sklearn.metrics import roc_curve, auc
 
 fpr_a, tpr_a, _ = roc_curve(y_test, proba_a)
 fpr_b, tpr_b, _ = roc_curve(y_test, proba_b)
+# fpr_c, tpr_c, _ = roc_curve(y_test, proba_c)
 
 plt.figure(figsize=(8, 6))
 plt.plot(fpr_a, tpr_a, color='darkorange', lw=2, label=f'Model A (XGBoost) (AUC = {metrics_a["roc_auc"]})')
 plt.plot(fpr_b, tpr_b, color='navy', lw=2, label=f'Model B (LightGBM) (AUC = {metrics_b["roc_auc"]})')
+# plt.plot(fpr_c, tpr_c, color='green', lw=2, label=f'Model C (Random Forest) (AUC = {metrics_c["roc_auc"]})')
 plt.plot([0, 1], [0, 1], color='gray', lw=2, linestyle='--')
 plt.xlim([0.0, 1.0])
 plt.ylim([0.0, 1.05])
@@ -153,4 +187,10 @@ out_path = os.path.join(models_dir, f"roc_curve_{VERSION_TAG}.png")
 plt.savefig(out_path, dpi=300, bbox_inches='tight')
 print(f"✅ ROC curve saved to {out_path}")
 
-print("\n✅ Both models trained and saved.")
+latest_path = os.path.join(models_dir, "roc_curve.png")
+plt.savefig(latest_path, dpi=300, bbox_inches='tight')
+# And one in the root for the API fallback
+root_path = os.path.join(BASE_DIR, "roc_curve.png")
+plt.savefig(root_path, dpi=300, bbox_inches='tight')
+
+print("\n✅ All models trained and saved.")

@@ -1,7 +1,7 @@
 {
-  "accuracy": 0.9005,
-  "roc_auc": 0.8957,
-  "model_type": "LightGBM",
+  "accuracy": 0.8903,
+  "roc_auc": 0.8959,
+  "model_type": "XGBoost",
   "features": [
     "Id",
     "Age",
@@ -18,5 +18,5 @@
     "Vitamin D Intake_Sufficient",
     "Medical Conditions_Rheumatoid Arthritis"
   ],
-  "version": "v20260329_130841"
+  "version": "v20260328_130228"
 }

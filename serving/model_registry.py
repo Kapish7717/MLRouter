@@ -67,10 +67,16 @@ registry.register(
     "models/model_b.pkl",
     "models/model_b_metadata.json"
 )
+# registry.register(
+#     "model_c",
+#     "models/model_c.pkl",
+#     "models/model_c_metadata.json"
+# )
 
 def _main_():
-    registered_model = registry.get("model_a")
-    print(registered_model)
+    for model_id in ["model_a", "model_b", "model_c"]:
+        registered_model = registry.get(model_id)
+        print(f"Loaded: {model_id} - {registered_model.metadata['model_type']}")
 
 if __name__ == "__main__":
     _main_()
